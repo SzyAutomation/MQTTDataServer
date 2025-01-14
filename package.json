@@ -9,7 +9,7 @@
     "server": "nodemon index.js",
     "client": "npm run start --prefix client",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "deploy": "npm run prestart && npm run start && npm run poststart"
+    "deploy": "npm run prestart && npm run server && npm run poststart"
   },
   "author": "",
   "license": "ISC",
