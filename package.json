@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "prestart": "echo 'pre start' && npm i",
+    "start": "echo 'starting server' && node index.js",
+    "poststart": "echo 'server started'",
     "server": "nodemon index.js",
     "client": "npm run start --prefix client",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
