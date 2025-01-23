@@ -63,22 +63,42 @@ async function logValue(topic, payload) {
     try {
         
         conn = await pool.getConnection();
-        
-        correctTopic = '[Nathans]' + topic;
+        const device_uuid = topic.split('/')[1]
+        const sensor_type = topic.split('/')[3]
 
-        var query = `SELECT tag_id FROM IgnitionDB.TempHomeData WHERE tag_path = '${correctTopic}'`;
+        var query = `
+SELECT t1.device_id, t3.sensor_type_id FROM SzyWebApp.DeviceIndex AS t1 
+LEFT JOIN SzyWebApp.DeviceData AS t2 
+ON t1.device_id = t2.device_id
+LEFT JOIN SzyWebApp.SensorTypeIndex AS t3
+ON t2.sensor_type_id = t3.sensor_type_id AND t3.sensor_type = '${sensor_type}'
+WHERE t1.device_uuid = '${device_uuid}'
+`
         var response = await conn.query(query);
-
         if (response) {
-            var query = `UPDATE TempHomeData SET value = ${payload}, t_stamp = NOW() WHERE tag_id = '${response[0].tag_id}'`
-            var response = await conn.query(query);
-            //console.log(response)
-        } else {
-            var query = `INSERT INTO TempHomeData (tag_path, value, t_stamp) VALUES ('${correctTopic}', ${payload}, NOW())`
-            var response = await conn.query(query);
-            //console.log(response)
-        }
+            const device_id = response[0].device_id
+            var sensor_type_id = response[0].sensor_type_id
 
+            if (!sensor_type_id){
+              var query = `SELECT sensor_type_id FROM SzyWebApp.SensorTypeIndex WHERE sensor_type = '${sensor_type}'`
+              response = await conn.query(query);
+              if(response){
+                sensor_type_id = response[0].sensor_type_id
+              } else {
+                return
+              }
+            }
+
+            var query = `UPDATE SzyWebApp.DeviceData SET value_float = ${payload}, last_update = NOW() WHERE device_id = ${device_id} and sensor_type_id = ${sensor_type_id}`
+            var response = await conn.query(query);
+
+            if (response.affectedRows==0){
+              query = `INSERT INTO SzyWebApp.DeviceData
+(device_id, sensor_type_id, value_float, last_update)
+VALUES(${device_id}, ${sensor_type_id}, ${payload}, current_timestamp());`
+              var response = await conn.query(query);
+            }
+        }
         conn.end();
 
     } catch (err) {
