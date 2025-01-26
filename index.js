@@ -71,15 +71,18 @@ SELECT t1.device_id, t2.data_id, t3.sensor_type_id FROM SzyWebApp.DeviceIndex AS
 LEFT JOIN SzyWebApp.DeviceData AS t2 
 ON t1.device_id = t2.device_id
 LEFT JOIN SzyWebApp.SensorTypeIndex AS t3
-ON t2.sensor_type_id = t3.sensor_type_id AND t3.sensor_type = '${sensor_type}'
-WHERE t1.device_uuid = '${device_uuid}'
+ON t2.sensor_type_id = t3.sensor_type_id
+WHERE t1.device_uuid = '${device_uuid}' AND t3.sensor_type = '${sensor_type}'
 `
+
         var response = await conn.query(query);
         if (response) {
             const device_id = response[0].device_id
             var sensor_type_id = response[0].sensor_type_id
-            var data_id = response[0].data_id
+            const data_id = response[0].data_id
             
+            console.log(response)
+
             // Get the sensor type id
             if (!sensor_type_id){
               var query = `SELECT sensor_type_id FROM SzyWebApp.SensorTypeIndex WHERE sensor_type = '${sensor_type}'`
