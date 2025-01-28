@@ -74,14 +74,14 @@ LEFT JOIN SzyWebApp.SensorTypeIndex AS t3
 ON t2.sensor_type_id = t3.sensor_type_id
 WHERE t1.device_uuid = '${device_uuid}' AND t3.sensor_type = '${sensor_type}'
 `
-
         var response = await conn.query(query);
-        if (response) {
+        
+        if (response.length > 0) {
+
             const device_id = response[0].device_id
             var sensor_type_id = response[0].sensor_type_id
             const data_id = response[0].data_id
             
-            console.log(response)
 
             // Get the sensor type id
             if (!sensor_type_id){
@@ -112,6 +112,26 @@ VALUES(${device_id}, ${sensor_type_id}, ${payload}, current_timestamp());`
               var response = await conn.query(query);
             }
 
+        } else {
+          
+          query = `SELECT device_id FROM SzyWebApp.DeviceIndex WHERE device_uuid = '${device_uuid}'`
+          response = await conn.query(query);
+          if (!response){
+            return
+          }
+          
+          const device_id = response[0].device_id
+          query = `SELECT sensor_type_id FROM SzyWebApp.SensorTypeIndex WHERE sensor_type = '${sensor_type}'`
+          response = await conn.query(query);
+          if (!response){
+            return
+          }
+          
+          const sensor_type_id = response[0].sensor_type_id
+          query = `INSERT INTO SzyWebApp.DeviceData
+          (device_id, sensor_type_id, value_float, last_update)
+          VALUES(${device_id}, ${sensor_type_id}, ${payload}, current_timestamp());`
+          var response = await conn.query(query);
         }
         conn.end();
 
